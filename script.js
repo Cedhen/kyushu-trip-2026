@@ -198,6 +198,13 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelector('.weather-card')?.addEventListener('click', () => {
         fetchWeather();
     });
+
+    // 圖片點擊放大功能
+    document.querySelectorAll('.schedule-box img').forEach(img => {
+        img.addEventListener('click', () => {
+            openImageModal(img.src);
+        });
+    });
 });
 
 function toggleChecklist() {
@@ -499,15 +506,34 @@ async function submitExpense() {
 
 function openAllergyModal() {
     document.getElementById('allergyModal').style.display = 'flex';
+    document.body.style.overflow = 'hidden'; // 禁止背景滑動
     // 增加一個震動提醒，確保使用者知道點擊成功
     if (navigator.vibrate) navigator.vibrate(20);
 }
 
 function closeAllergyModal() {
     document.getElementById('allergyModal').style.display = 'none';
+    document.body.style.overflow = ''; // 恢復背景滑動
 }
 
 // 監聽 Esc 鍵關閉彈窗
 document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') closeAllergyModal();
+    if (e.key === 'Escape') {
+        closeAllergyModal();
+        closeImageModal();
+    }
 });
+
+function openImageModal(src) {
+    const modal = document.getElementById('imageModal');
+    const imgEl = document.getElementById('enlarged-image');
+    imgEl.src = src;
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden'; // 禁止背景滑動
+    if (navigator.vibrate) navigator.vibrate(20);
+}
+
+function closeImageModal() {
+    document.getElementById('imageModal').style.display = 'none';
+    document.body.style.overflow = ''; // 恢復背景滑動
+}
