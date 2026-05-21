@@ -199,6 +199,31 @@ document.addEventListener('DOMContentLoaded', () => {
         fetchWeather();
     });
 
+    // 讓行程卡片支援點擊查看該日天氣
+    document.querySelectorAll('.schedule-box').forEach(box => {
+        const dateStr = box.dataset.date;
+        const cityForDay = window.DAILY_WEATHER_CITIES && window.DAILY_WEATHER_CITIES[dateStr];
+        
+        if (cityForDay) {
+            box.classList.add('has-weather');
+            box.title = `點擊查看 ${cityForDay} 的天氣預報`;
+            
+            box.addEventListener('click', (e) => {
+                // 排除點擊地圖連結、圖片或已完成的項目，避免影響原有功能
+                if (e.target.tagName === 'A' || e.target.tagName === 'IMG' || e.target.closest('a') || e.target.tagName === 'INPUT') {
+                    return;
+                }
+                fetchWeather(cityForDay);
+                
+                // 平滑滾動回頂部天氣卡片
+                document.querySelector('.weather-card')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                
+                // 震動回饋
+                if (navigator.vibrate) navigator.vibrate(20);
+            });
+        }
+    });
+
     // 圖片點擊放大功能
     document.querySelectorAll('.schedule-box img').forEach(img => {
         img.addEventListener('click', () => {
@@ -233,18 +258,29 @@ async function fetchExchangeRate() {
     }
 }
 
-// 獲取天氣資訊
-async function fetchWeather() {
+// 獲取天氣資訊，支援指定城市，若無指定則自動判定今日城市
+async function fetchWeather(targetCity) {
     try {
         // 顯示載入中
         document.getElementById('weather-temp').innerText = '更新中...';
         document.getElementById('weather-desc').innerText = '--';
 
-        // 使用配置的天氣城市（支援任何城市名稱）
-        const cityName = window.WEATHER_CITY || 'Kuala Lumpur';
+        // 優先使用指定城市，否則尋找今日行程的城市，最後 fallback 預設城市
+        let cityName = targetCity;
+        if (!cityName) {
+            const now = new Date();
+            const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+            cityName = (window.DAILY_WEATHER_CITIES && window.DAILY_WEATHER_CITIES[todayStr]) || window.WEATHER_CITY || 'Kuala Lumpur';
+        }
 
         // 將底線替換為空格（支援 Kuala_Lumpur 格式）
         const searchCity = cityName.replace(/_/g, ' ');
+
+        // 更新天氣卡片的城市標題
+        const cityLabelEl = document.getElementById('weather-city-label');
+        if (cityLabelEl) {
+            cityLabelEl.innerText = `${searchCity} 天氣`;
+        }
 
         // 步驟1: 使用 Open-Meteo Geocoding API 查詢城市座標
         const geoResponse = await fetch(

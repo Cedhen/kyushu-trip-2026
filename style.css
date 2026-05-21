@@ -326,6 +326,41 @@ h1 { color: var(--main-accent); margin: 0; font-size: 24px; letter-spacing: 2px;
 .tag-today { background: var(--main-accent); }
 .date-text { color: var(--main-accent); font-weight: bold; font-size: 18px; }
 
+.weather-city-badge {
+    font-size: 11px;
+    background: rgba(184, 134, 11, 0.06);
+    color: var(--main-accent);
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-weight: bold;
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    border: 1px solid var(--border-color);
+    transition: background-color 0.2s, transform 0.2s;
+}
+
+.schedule-box.has-weather {
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+}
+
+.schedule-box.has-weather:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(184, 134, 11, 0.15);
+    border-color: var(--accent-gold);
+}
+
+.schedule-box.has-weather:active {
+    transform: translateY(0);
+}
+
+.schedule-box.has-weather:hover .weather-city-badge {
+    background: rgba(184, 134, 11, 0.15);
+    transform: scale(1.05);
+}
+
 ul { padding: 0; margin: 0; }
 .time-label { font-weight: bold; color: var(--main-accent); margin-right: 10px; font-size: 16px; }
 b, strong { color: var(--main-accent); font-weight: bold; }

@@ -1,5 +1,6 @@
 import os
 import re
+import json
 import pandas as pd
 from googleapiclient.discovery import build
 
@@ -29,12 +30,14 @@ def main():
     checklist_html = ""
     light_colors = {}
     dark_colors = {}
+    daily_weather_cities = {}
+    settings_daily_weather_cities = {}
 
     # --- 1. 處理行程表 (Schedule Tab) ---
     print("📋 Fetching Schedule...")
     try:
-        # 讀取 A 到 H 欄 (H 欄預期為 Note)
-        sched_res = sheet.values().get(spreadsheetId=sheet_id, range='Schedule!A:I').execute()
+        # 讀取 A 到 L 欄 (擴大範圍以包含 Weather_City 欄位)
+        sched_res = sheet.values().get(spreadsheetId=sheet_id, range='Schedule!A:L').execute()
         sched_rows = sched_res.get('values', [])
         
         if sched_rows:
@@ -71,8 +74,27 @@ def main():
                     except:
                         display_date = date[5:].replace('-', '/') if len(date) >= 10 else date
 
+                # 提取當日的天氣城市設定 (檢查是否有 Weather_City, 天氣城市, Weather, 天氣, City, 城市 欄位)
+                day_weather_city = ""
+                weather_col_names = ['Weather_City', '天氣城市', 'Weather', '天氣', 'City', '城市']
+                weather_col = None
+                for col in weather_col_names:
+                    if col in df_sched.columns:
+                        weather_col = col
+                        break
+                
+                if weather_col:
+                    for v in group[weather_col]:
+                        if str(v).strip() and str(v).strip().lower() != 'nan':
+                            day_weather_city = str(v).strip()
+                            break
+                
+                if day_weather_city:
+                    daily_weather_cities[iso_date] = day_weather_city
+
+                city_badge = f'<span class="weather-city-badge">📍 {day_weather_city}</span>' if day_weather_city else ""
                 box_html = f'<div class="schedule-box" data-date="{iso_date}">\n'
-                box_html += f'    <div class="day-info"><span class="tag">{day}</span> <span class="date-text">{display_date}</span></div>\n'
+                box_html += f'    <div class="day-info"><span class="tag">{day}</span> <span class="date-text">{display_date}</span>{city_badge}</div>\n'
                 box_html += f'    <h3>{title}</h3>\n    <ul>\n'
                 
                 for _, row in group.iterrows():
@@ -147,6 +169,9 @@ def main():
                 # 處理功能設定
                 if key == 'weather_city':
                     weather_city = val
+                elif key.startswith('weather_city_'):
+                    date_key = key.replace('weather_city_', '').strip()
+                    settings_daily_weather_cities[date_key] = val
                 elif key == 'exchange_from':
                     exchange_from = val
                 elif key == 'exchange_to':
@@ -203,6 +228,14 @@ def main():
                     acc_payers_options += f'<option value="{value}">{payer}</option>\n'
     except Exception as e:
         print(f"⚠️ Accounting payers warning: {e}")
+    # 彙整每日天氣城市設定（行程表設定優先於 Settings，最後 fallback 預設城市）
+    final_daily_weather = {}
+    final_daily_weather.update(settings_daily_weather_cities)
+    for d, c in daily_weather_cities.items():
+        if c:
+            final_daily_weather[d] = c
+    daily_weather_json = json.dumps(final_daily_weather, ensure_ascii=False)
+
     # --- 4. 生成檔案 ---
     print("🏗️ Building files...")
     # 讀取模板
@@ -222,6 +255,7 @@ def main():
 
     # 注入匯率和天氣設定
     final_html = final_html.replace('{{WEATHER_CITY}}', weather_city)
+    final_html = final_html.replace('{{DAILY_WEATHER_CITIES_JSON}}', daily_weather_json)
     final_html = final_html.replace('{{EXCHANGE_FROM}}', exchange_from)
     final_html = final_html.replace('{{EXCHANGE_TO}}', exchange_to)
 

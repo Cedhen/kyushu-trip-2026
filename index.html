@@ -98,7 +98,7 @@
                 <div class="weather-today">
                     <div class="info-icon" id="weather-icon">🌤️</div>
                     <div class="info-content">
-                        <div class="info-label">{{WEATHER_CITY}} 天氣</div>
+                        <div class="info-label" id="weather-city-label">{{WEATHER_CITY}} 天氣</div>
                         <div class="info-value" id="weather-temp">載入中...</div>
                         <div class="info-detail" id="weather-desc">--</div>
                         <div class="info-detail" id="weather-temp-range">--</div>
@@ -179,6 +179,7 @@
     <!-- 從 Google Sheets 載入的設定 -->
     <script>
         window.WEATHER_CITY = '{{WEATHER_CITY}}';
+        window.DAILY_WEATHER_CITIES = {{DAILY_WEATHER_CITIES_JSON}};
         window.EXCHANGE_FROM = '{{EXCHANGE_FROM}}';
         window.EXCHANGE_TO = '{{EXCHANGE_TO}}';
     </script>
